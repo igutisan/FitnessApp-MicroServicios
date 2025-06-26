@@ -18,7 +18,7 @@ public class UserService {
     public Mono<Boolean> validateUser(String userId){
 
 
-            log.info("Calling User Validation API for userID: {userId}"+ userId);
+            log.info("Calling User Validation API for userID: {userId} since gateway"+ userId);
            return userServiceWebClient.get()
                     .uri("/api/users/{userId}/validate", userId)
                     .retrieve()

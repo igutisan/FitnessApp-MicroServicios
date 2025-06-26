@@ -21,30 +21,30 @@ public class KeycloakUserSyncFilter implements WebFilter {
     private UserService userService;
 
     @Override
-    public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain){
+    public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
         String token = exchange.getRequest().getHeaders().getFirst("Authorization");
         String userId = exchange.getRequest().getHeaders().getFirst("X-User-ID");
         RegisterRequest registerRequest = getUserDetails(token);
-        if (userId == null){
+
+        if (userId == null) {
             userId = registerRequest.getKeycloakId();
         }
-        if(userId != null && token !=null){
+
+        if (userId != null && token != null){
             String finalUserId = userId;
             return userService.validateUser(userId)
                     .flatMap(exist -> {
-                        if(!exist){
-                            //Register User
+                        if (!exist) {
+                            // Register User
 
-                            if(registerRequest != null){
+                            if (registerRequest != null) {
                                 return userService.registerUser(registerRequest)
                                         .then(Mono.empty());
-                            }else{
+                            } else {
                                 return Mono.empty();
                             }
-
-
-                        }else {
-                            log.info("User already exist, skip sync");
+                        } else {
+                            log.info("User already exist, Skipping sync.");
                             return Mono.empty();
                         }
                     })
@@ -58,20 +58,19 @@ public class KeycloakUserSyncFilter implements WebFilter {
         return chain.filter(exchange);
     }
 
-    private RegisterRequest getUserDetails(String token){
+    private RegisterRequest getUserDetails(String token) {
         try {
-            String tokenWithoutBearer = token.replace("Bearer", "").trim();
+            String tokenWithoutBearer = token.replace("Bearer ", "").trim();
             SignedJWT signedJWT = SignedJWT.parse(tokenWithoutBearer);
             JWTClaimsSet claims = signedJWT.getJWTClaimsSet();
 
             RegisterRequest registerRequest = new RegisterRequest();
-            registerRequest.setKeycloakId(claims.getStringClaim("sub"));
             registerRequest.setEmail(claims.getStringClaim("email"));
+            registerRequest.setKeycloakId(claims.getStringClaim("sub"));
             registerRequest.setPassword("dummy@123123");
             registerRequest.setFirstName(claims.getStringClaim("given_name"));
             registerRequest.setLastName(claims.getStringClaim("family_name"));
             return registerRequest;
-
         } catch (Exception e) {
             e.printStackTrace();
             return null;

@@ -15,26 +15,21 @@ public class UserValidationService {
     private WebClient userServiceWebClient;
 
     //Implementation necesary for consultance users with reactive programming with webflux
-    public boolean validateUser(String userId){
-
-        try {
-            log.info("Calling User Validation API for userID: {userId}"+ userId);
-           return Boolean.TRUE.equals(userServiceWebClient.get()
-                   .uri("/api/users/{userId}/validate", userId)
-                   .retrieve()
-                   .bodyToMono(Boolean.class)
-                   .block());
-        }catch (WebClientResponseException e){
-            if(e.getStatusCode() == HttpStatus.NOT_FOUND) {
-                throw new RuntimeException("Invalid URI");
-            }
-            else  if(e.getStatusCode() == HttpStatus.BAD_REQUEST){
-                throw new RuntimeException("Invalid request: "+userId);
-            }
-
+    public boolean validateUser(String userId) {
+        log.info("Calling User Validation API for userId: {} since activity", userId);
+        try{
+            return Boolean.TRUE.equals(userServiceWebClient.get()
+                    .uri("/api/users/{userId}/validate", userId)
+                    .retrieve()
+                    .bodyToMono(Boolean.class)
+                    .block());
+        } catch (WebClientResponseException e) {
+            if (e.getStatusCode() == HttpStatus.NOT_FOUND)
+                throw new RuntimeException("User Not Found: " + userId);
+            else if (e.getStatusCode() == HttpStatus.BAD_REQUEST)
+                throw new RuntimeException("Invalid Request: " + userId);
         }
         return false;
-
     }
 
 }
